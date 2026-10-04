@@ -1,0 +1,42 @@
+# Alertmanager 配置
+# 默认把告警 POST 到 ${WEBHOOK_URL}（在 .env 里配置 ALERT_WEBHOOK_URL）
+# 飞书/钉钉/企微接入：推荐用 prometheus-webhook-dingtalk 这类网关做一次转换，
+# 把它的地址填进 ALERT_WEBHOOK_URL 即可，详见 README 常见问题
+
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ["alertname", "instance"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: "webhook-default"
+  routes:
+    # critical 级别单独路由，可配不同的 webhook（比如电话告警网关）
+    - matchers:
+        - severity = "critical"
+      receiver: "webhook-critical"
+      continue: true
+
+receivers:
+  - name: "webhook-default"
+    webhook_configs:
+      - url: "${WEBHOOK_URL}"
+        send_resolved: true
+        max_alerts: 10
+
+  - name: "webhook-critical"
+    webhook_configs:
+      - url: "${WEBHOOK_URL}"
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+
+# 同一主机的 warning 在 critical 触发时自动抑制，避免告警轰炸
+inhibit_rules:
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: ["alertname", "instance"]

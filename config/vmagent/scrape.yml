@@ -1,0 +1,62 @@
+# vmagent 抓取配置（兼容 Prometheus scrape_config 语法）
+# vmagent 会把抓到的数据 remoteWrite 到 VictoriaMetrics
+# 要加新目标：在 scrape_configs 下追加一个 job 即可，改完执行 docker compose restart vmagent
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    cluster: "vm-stack-cn"
+
+scrape_configs:
+  # vmagent 自己
+  - job_name: "vmagent"
+    static_configs:
+      - targets: ["localhost:8429"]
+
+  # VictoriaMetrics 单机版
+  - job_name: "victoria-metrics"
+    static_configs:
+      - targets: ["victoria-metrics:8428"]
+    metrics_path: /metrics
+
+  # vmalert
+  - job_name: "vmalert"
+    static_configs:
+      - targets: ["vmalert:8880"]
+
+  # alertmanager
+  - job_name: "alertmanager"
+    static_configs:
+      - targets: ["alertmanager:9093"]
+
+  # Grafana
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["grafana:3000"]
+    metrics_path: /metrics
+
+  # 演示主机（node-exporter）
+  - job_name: "node"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "demo-host"
+
+  # ---- 示例：接入 snmp_exporter（配合 snmp-mib-ui 生成的配置）----
+  # 详见 docs/snmp-integration.md，取消注释并修改 target 后启用
+  # - job_name: "snmp"
+  #   static_configs:
+  #     - targets: ["192.168.1.1"]   # 交换机/路由器 IP
+  #   metrics_path: /snmp
+  #   params:
+  #     module: [cisco]               # 与 snmp.yml 中的 module 对应
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: __param_target
+  #     - source_labels: [__param_target]
+  #       target_label: instance
+  #     - target_label: __address__
+  #       replacement: "snmp-exporter:9116"

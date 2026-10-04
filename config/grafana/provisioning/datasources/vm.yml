@@ -1,0 +1,15 @@
+# Grafana 数据源预置：VictoriaMetrics（兼容 Prometheus API）
+apiVersion: 1
+
+datasources:
+  - name: VictoriaMetrics
+    type: prometheus
+    access: proxy
+    url: http://victoria-metrics:8428
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s
+      # VictoriaMetrics 支持 MetricsQL（PromQL 超集），Grafana 里可直接用
+      # 例： topk(5, sum(rate(vm_rows_inserted_total[5m])) by (job))

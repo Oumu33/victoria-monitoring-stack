@@ -1,0 +1,31 @@
+# VictoriaMetrics 组件自监控告警
+groups:
+  - name: vm-health
+    interval: 30s
+    rules:
+      - alert: VM组件采集中断
+        expr: up{job=~"vmagent|victoria-metrics|vmalert"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "监控组件 {{ $labels.job }} 采集中断"
+          description: "{{ $labels.job }} 已超过 2 分钟无数据，监控栈自身异常，请优先处理。"
+
+      - alert: vmalert规则评估出错
+        expr: sum(increase(vmalert_iteration_errors_total[5m])) by (job) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "vmalert 规则评估出现错误"
+          description: "近 5 分钟规则评估错误 {{ $value }} 次，请检查 rules 语法与查询语句。"
+
+      - alert: vmagent远程写失败
+        expr: sum(rate(vmagent_remotewrite_send_errors_total[5m])) by (job) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "vmagent 向 VictoriaMetrics 远程写失败"
+          description: "数据写不进存储，监控数据正在丢失，请检查 vm-single 状态与网络。"

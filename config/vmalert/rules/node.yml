@@ -1,0 +1,50 @@
+# 主机基础告警（中文注释，开箱即用）
+# 阈值按中小规模机器调得比较宽松，生产环境请按需收紧
+groups:
+  - name: host
+    interval: 30s
+    rules:
+      - alert: 主机宕机
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "主机 {{ $labels.instance }} 采集中断"
+          description: "node-exporter 已超过 2 分钟没有上报数据，请检查主机或网络。"
+
+      - alert: CPU使用率过高
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "主机 {{ $labels.instance }} CPU 使用率超过 85%"
+          description: "5 分钟平均 CPU 使用率 {{ $value | printf \"%.1f\" }}%，请排查是否有异常进程。"
+
+      - alert: 内存使用率过高
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "主机 {{ $labels.instance }} 内存使用率超过 90%"
+          description: "当前内存使用率 {{ $value | printf \"%.1f\" }}%，注意 OOM 风险。"
+
+      - alert: 磁盘空间不足
+        expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "主机 {{ $labels.instance }} 磁盘 {{ $labels.mountpoint }} 使用率超过 85%"
+          description: "当前使用率 {{ $value | printf \"%.1f\" }}%，请及时清理或扩容。"
+
+      - alert: 磁盘即将写满
+        expr: predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"}[6h], 24 * 3600) < 0
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "主机 {{ $labels.instance }} 磁盘 {{ $labels.mountpoint }} 预计 24 小时内写满"
+          description: "按近 6 小时增速预测，24 小时内可用空间将耗尽，请立即处理。"
