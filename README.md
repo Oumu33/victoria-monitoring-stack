@@ -3,6 +3,7 @@
 [![VictoriaMetrics](https://img.shields.io/badge/VictoriaMetrics-v1.153.0-blue)](https://github.com/VictoriaMetrics/VictoriaMetrics/releases)
 [![Grafana](https://img.shields.io/badge/Grafana-13.2.3-orange)](https://github.com/grafana/grafana/releases)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com)
+[![Validate](https://github.com/Oumu33/victoria-monitoring-stack/actions/workflows/validate.yml/badge.svg)](https://github.com/Oumu33/victoria-monitoring-stack/actions/workflows/validate.yml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **[中文版](README_zh.md) | English**

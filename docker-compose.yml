@@ -39,10 +39,13 @@ services:
       - "--promscrape.config=/etc/vmagent/scrape.yml"
       - "--remoteWrite.url=http://victoria-metrics:8428/api/v1/write"
       - "--httpListenAddr=:8429"
+      # 流式聚合（降 series 神器）：取消下面两行注释启用
+      # - "--remoteWrite.streamAggr.config=/etc/vmagent/stream-aggr.yml"
     ports:
       - "8429:8429"
     volumes:
       - ./config/vmagent/scrape.yml:/etc/vmagent/scrape.yml:ro
+      # - ./config/vmagent/stream-aggr.yml:/etc/vmagent/stream-aggr.yml:ro
       - vmagent-data:/vmagent-remotewrite-data
     depends_on:
       victoria-metrics:
@@ -82,8 +85,24 @@ services:
       - "9093:9093"
     volumes:
       - ./config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-    environment:
-      - WEBHOOK_URL=${ALERT_WEBHOOK_URL:-http://localhost:5001/webhook}
+    networks:
+      - monitoring
+
+  # SNMP 采集（可选）：需先用 snmp-mib-ui 生成 snmp.yml
+  # 详见 config/snmp-exporter/snmp.yml.example，启用：
+  #   docker compose --profile snmp up -d
+  snmp-exporter:
+    image: prom/snmp-exporter:latest # 生产请 pin 具体版本
+    container_name: snmp-exporter
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/snmp_exporter/snmp.yml"
+    ports:
+      - "9116:9116"
+    volumes:
+      - ./config/snmp-exporter/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    profiles:
+      - snmp
     networks:
       - monitoring
 

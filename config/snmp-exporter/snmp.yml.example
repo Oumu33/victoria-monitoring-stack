@@ -1,0 +1,8 @@
+# snmp_exporter 配置占位
+# 用 snmp-mib-ui (https://github.com/Oumu33/snmp-mib-ui) 可视化选择 OID 后，
+# 选择引擎为 "SNMP Exporter"，一键生成 snmp.yml，
+# 把生成的文件改名为 snmp.yml 放到本目录（替换此占位说明），
+# 然后执行: docker compose --profile snmp up -d
+#
+# 注意：不要把 .example 后缀去掉之前直接启用 snmp profile，
+# 否则容器因缺少配置文件启动失败。

@@ -1,0 +1,28 @@
+name: validate
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: YAML lint
+        run: |
+          pip install yamllint
+          yamllint -d relaxed .
+
+      - name: Validate alert rules with promtool
+        run: |
+          docker run --rm -v "$PWD/config/vmalert/rules:/rules:ro" \
+            prom/prometheus:latest promtool check rules /rules/*.yml
+
+      - name: Validate compose file
+        run: docker compose config -q
+
+      - name: Validate dashboard JSON
+        run: python3 -c "import json; d=json.load(open('config/grafana/dashboards/vm-overview.json')); assert d['uid']=='vm-stack-overview', 'bad uid'"
+
+      - name: Validate Python scripts compile
+        run: python3 -m py_compile scripts/*.py

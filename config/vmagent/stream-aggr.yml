@@ -1,0 +1,15 @@
+# vmagent 流式聚合示例：高频指标先聚合再写入，大幅降低 series 数量
+# 启用方法：在 docker-compose.yml 的 vmagent command 中取消注释
+#   - "--remoteWrite.streamAggr.config=/etc/vmagent/stream-aggr.yml"
+# 并取消 config 卷挂载行的注释。详见
+# https://docs.victoriametrics.com/victoriametrics/stream-aggregation/
+
+# 示例：node_cpu_seconds_total 按 1 分钟求平均后再存
+- match: '{__name__=~"node_cpu_seconds_total"}'
+  interval: 1m
+  outputs: [avg]
+
+# 示例：只保留 http 请求量的 1 分钟总和
+# - match: '{__name__=~"http_requests_total"}'
+#   interval: 1m
+#   outputs: [total]
